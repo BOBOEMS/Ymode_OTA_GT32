@@ -46,12 +46,17 @@ static int ReadAll(const char *path, uint8_t **out_buf, size_t *out_len)
         (void)fclose(fp);
         return -1;
     }
+    if (sz == 0) {
+        (void)fprintf(stderr, "空文件: %s\n", path);
+        (void)fclose(fp);
+        return -1;
+    }
     if (fseek(fp, 0, SEEK_SET) != 0) {
         (void)fclose(fp);
         return -1;
     }
     buf = (uint8_t *)malloc((size_t)sz);
-    if (buf == NULL && sz != 0) {
+    if (buf == NULL) {
         (void)fclose(fp);
         return -1;
     }

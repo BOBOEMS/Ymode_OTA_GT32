@@ -1,6 +1,9 @@
 # CardReader GT32 OTA — host tests (Slice 1–9)
 # Slice 9 = factory 128 KiB pack tool（AC-YM-19；主机 E1/E2；禁 YMODEM；非 E3）
-CC       ?= gcc
+# GNU make 内建 CC=cc 会让 `CC ?= gcc` 永不生效；仅在未显式指定时默认 gcc
+ifeq ($(origin CC),default)
+CC       = gcc
+endif
 CFLAGS   ?= -std=c99 -Wall -Wextra -Werror -O0 -g
 CPPFLAGS  = -Iinclude
 BUILD     = build
@@ -102,7 +105,7 @@ files=['include/gt32_raw.h','include/board_gt32.h','src/gt32_raw.c','src/board_g
 'include/app_ota.h','src/app_ota.c','include/factory_pack.h','src/factory_pack.c'];\
 pat=re.compile(r'(?<![0-9A-Fa-f])0x(60|C7)(?![0-9A-Fa-f])|gt32_cmd_chip_erase|ChipErase|CHIP_ERASE');\
 bad=[];\
-[bad.extend([(f,i+1,l.rstrip()) for i,l in enumerate(pathlib.Path(f).read_text().splitlines()) if pat.search(l)]) for f in files];\
+[bad.extend([(f,i+1,l.rstrip()) for i,l in enumerate(pathlib.Path(f).read_text(encoding='utf-8').splitlines()) if pat.search(l)]) for f in files];\
 sys.exit('FAIL: Chip Erase found:\n'+'\n'.join(f'{a}:{b}:{c}' for a,b,c in bad)) if bad else print('PASS: no Chip Erase opcodes/symbols in gt32/boot/fmc/meta/image production sources')"
 
 # 传输模块不得引用 OtaMeta_Commit*；boot 的 HandleData/EraseSecondary/Header 亦不得

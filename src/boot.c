@@ -23,7 +23,6 @@
  * 安装阶段调 CommitAppValid / CommitOtaFail。
  */
 
-#define BOOT_CRC32_INIT (0xFFFFFFFFu)
 #define BOOT_TX_LOG_CAP (128u)
 #define SEND_CAN_CAN (1u)
 #define SEND_NO_CAN  (0u)
@@ -59,38 +58,6 @@ static uint32_t Boot_NowMs(void)
     }
 #endif
     return BoardGt32_GetTickMs();
-}
-
-/**
-@brief IEEE CRC32 增量更新（与 OtaCrc32_Compute 同一 poly）
-*/
-static uint32_t Boot_Crc32Update(uint32_t crc_state, const uint8_t *data, size_t len)
-{
-    size_t i;
-    int bit;
-
-    if (data == NULL && len > 0u) {
-        return crc_state;
-    }
-    for (i = 0u; i < len; i++) {
-        crc_state ^= (uint32_t)data[i];
-        for (bit = 0; bit < 8; bit++) {
-            if ((crc_state & 1u) != 0u) {
-                crc_state = (crc_state >> 1) ^ 0xEDB88320u;
-            } else {
-                crc_state = (crc_state >> 1);
-            }
-        }
-    }
-    return crc_state;
-}
-
-/**
-@brief 完成 CRC32（终异或）
-*/
-static uint32_t Boot_Crc32Finalize(uint32_t crc_state)
-{
-    return crc_state ^ 0xFFFFFFFFu;
 }
 
 /**
@@ -301,7 +268,7 @@ static BootOtaStatus_t Boot_OtaHandleHeader(BootOtaSession_t *sess,
         sess->filename_length = header.filename_length;
         sess->declared_size = header.file_size;
         sess->bytes_written = 0u;
-        sess->image_crc_state = BOOT_CRC32_INIT;
+        sess->image_crc_state = OTA_IMAGE_CRC32_INITIAL;
         sess->image_crc32 = 0u;
         sess->expected_packet = 1u;
         sess->can_count = 0u;
@@ -397,8 +364,9 @@ static BootOtaStatus_t Boot_OtaHandleData(BootOtaSession_t *sess,
     }
 
     sess->bytes_written += write_length;
-    sess->image_crc_state = Boot_Crc32Update(sess->image_crc_state, frame->payload,
-                                             (size_t)write_length);
+    sess->image_crc_state = OtaImage_Crc32Update(sess->image_crc_state,
+                                                 frame->payload,
+                                                 (uint32_t)write_length);
     sess->expected_packet++;
     (void)Boot_OtaReply(DRV_YM_ACK, 0u);
     sess->phase_mark_ms = Boot_NowMs();
@@ -416,7 +384,7 @@ static BootOtaStatus_t Boot_OtaHandleEot(BootOtaSession_t *sess)
 {
     if (sess->phase == BOOT_OTA_RECEIVE_DATA
         || sess->phase == BOOT_OTA_WAIT_EOT1) {
-        sess->image_crc32 = Boot_Crc32Finalize(sess->image_crc_state);
+        sess->image_crc32 = OtaImage_Crc32Finalize(sess->image_crc_state);
         if (Boot_OtaImageCheckStub(sess) == 0) {
             DrvUsart_RxRelease();
             return Boot_OtaFailAttempt(sess, SEND_CAN_CAN, BOOT_OTA_ERR_PROTOCOL);

@@ -213,7 +213,6 @@ uint8_t OtaImage_CopySecondaryToApp(uint32_t image_size, uint32_t expected_crc32
     uint8_t vectors[OTA_IMAGE_VECTOR_BYTES];
     uint32_t off;
     uint32_t n;
-    uint32_t body_len;
     GT32_Status_t gst;
 
     if (OtaImage_VerifySecondary(image_size, expected_crc32) == 0u) {
@@ -225,7 +224,6 @@ uint8_t OtaImage_CopySecondaryToApp(uint32_t image_size, uint32_t expected_crc32
     }
 
     /* 先主体（跳过向量 8B），再写向量，避免半装可启动 */
-    body_len = image_size - OTA_IMAGE_VECTOR_BYTES;
     off = OTA_IMAGE_VECTOR_BYTES;
     while (off < image_size) {
         n = image_size - off;
@@ -245,7 +243,6 @@ uint8_t OtaImage_CopySecondaryToApp(uint32_t image_size, uint32_t expected_crc32
         }
         off += n;
     }
-    (void)body_len;
 
     gst = GT32_Read(ota_gt32_secondary_off, vectors, OTA_IMAGE_VECTOR_BYTES);
     if (gst != GT32_OK) {

@@ -15,11 +15,11 @@ for rel in [
     "include/drv_usart.h",
 ]:
     path = ROOT / rel
-    for i, line in enumerate(path.read_text().splitlines(), 1):
+    for i, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
         if pat.search(line):
             bad.append(f"{rel}:{i}:{line.rstrip()}")
 
-boot = (ROOT / "src/boot.c").read_text()
+boot = (ROOT / "src/boot.c").read_text(encoding="utf-8")
 for name in ("Boot_OtaHandleData", "Boot_OtaEraseSecondary", "Boot_OtaHandleHeader"):
     m = re.search(
         r"(static\s+)?BootOtaStatus_t\s+" + name + r"\s*\([^;]*?\)\s*\{",
