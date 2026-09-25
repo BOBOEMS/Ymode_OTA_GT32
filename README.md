@@ -1,4 +1,4 @@
-# CardReader GT32 OTA — Slice 1–9
+# Ymode OTA GT32 — Slice 1–9
 
 片内/GT32 分区常数、Meta 编解码、`gt32_raw`、Boot/YMODEM、`CommitImageReady`、**Slice 6 安装**、**Slice 7：上电三旗标选路 / BKP1 消费 / BKP2 门限 5 / `LOAD_A`**，以及 **Slice 8：App↔Boot `AppOta_*` 契约（无 Modbus）**（对照 ref-v031 语义按 C 规范重写）。
 
@@ -59,8 +59,8 @@ READY/VALID：仅完整 `0` 为置位。FAIL：仅 `0xFFFFFFFF` 为未置位。
 
 待安装优先于 BKP/跳转。READY+VALID 且 FAIL 未置位之后：
 
-1. BKP1==`0x3344` → 写 BKP1=`0xAABB`（消费）→ OTA  
-2. 否则 BKP2≥5 → OTA（**无** LastGood 自动恢复）  
+1. BKP1==`0x3344` → 写 BKP1=`0xAABB`（消费）→ OTA
+2. 否则 BKP2≥5 → OTA（**无** LastGood 自动恢复）
 3. 否则 BKP2++ 回读 → JUMP → `LOAD_A(app_base)`
 
 ### 统一跳转交接清单（主机记录位）
@@ -141,7 +141,7 @@ READY/VALID：仅完整 `0` 为置位。FAIL：仅 `0xFFFFFFFF` 为未置位。
 
 ## Slice 2–5（摘要）
 
-`gt32_raw` 白名单：`03h`/`06h`/`02h`/`20h`/`D8h`/`05h`。**禁止** CE `60h`/`C7h`。  
+`gt32_raw` 白名单：`03h`/`06h`/`02h`/`20h`/`D8h`/`05h`。**禁止** CE `60h`/`C7h`。
 Boot OTA 相位机 + `CommitImageReady`；传输路径不写 Meta。
 
 引脚：`BOARD_GT32_PINS_CONFIRMED 0` → **实机尚未验证**。
@@ -154,22 +154,22 @@ make -C /workspace/cardreader-ota-gt32 clean test
 
 ## R02 偏差
 
-- **无功能偏差**（预期选路表与 v1 无 LastGood 自动恢复一致）。  
-- 主机：BKP/跳转/复位/`LOAD_A` 为桩（交接清单位可测）；实机 PMU/BKP 寄存器、RS485/DMA/USART/SysTick/VTOR/MSP：**未接线 / 未验证**（`BOARD_GT32_TARGET` TODO，无引脚号）。  
-- OTA 分支的 `All_Init`/发 C 由既有 `Boot_OtaStartAttempt` 承担；`Boot_MainOnce` 的 OTA 出口仅返回路径枚举（主机测选路，不替代完整 Boot 服务循环）。  
-- 实机 FMC/GT32/掉电：**未验证**（非 E3/E4）。  
+- **无功能偏差**（预期选路表与 v1 无 LastGood 自动恢复一致）。
+- 主机：BKP/跳转/复位/`LOAD_A` 为桩（交接清单位可测）；实机 PMU/BKP 寄存器、RS485/DMA/USART/SysTick/VTOR/MSP：**未接线 / 未验证**（`BOARD_GT32_TARGET` TODO，无引脚号）。
+- OTA 分支的 `All_Init`/发 C 由既有 `Boot_OtaStartAttempt` 承担；`Boot_MainOnce` 的 OTA 出口仅返回路径枚举（主机测选路，不替代完整 Boot 服务循环）。
+- 实机 FMC/GT32/掉电：**未验证**（非 E3/E4）。
 - AppOta：主机复位为桩；实机 NVIC/BKP：**未验证**（非 E3）。**无** Modbus FC/寄存器。
 - FactoryPack：主机自检；**未板端烧录回读**（非 E3）。禁 YMODEM 发工厂包；GT32 不在片内包。
 - **未声称 E3**；**未宣称** AC-YM-15/20/22 的 E4 完成。
 
 ## 文件
 
-- `include/boot_bkp.h` / `src/boot_bkp.c` — BKP1/BKP2 契约与主机 RAM 桩  
-- `src/main.c` — `Boot_MainOnce`（开备份域 → SelectPath → 分支）  
-- `include/boot.h` / `src/boot.c` — 相位机 + Install + SelectPath + `LOAD_A`  
-- `tests/test_boot_select.c` — Slice 7 主机 E2  
-- `include/app_ota.h` / `src/app_ota.c` — Slice 8 App↔Boot 契约（无 Modbus）  
-- `tests/test_app_ota.c` / `scripts/check_app_ota_no_modbus.py` — Slice 8 主机 E2 + 无 Modbus 证明  
-- `include/factory_pack.h` / `src/factory_pack.c` / `tools/factory_pack_main.c` — Slice 9 出厂包  
-- `tests/test_factory_pack.c` / `scripts/check_factory_no_ymodem.py` — Slice 9 主机 E2 + 禁 YMODEM  
+- `include/boot_bkp.h` / `src/boot_bkp.c` — BKP1/BKP2 契约与主机 RAM 桩
+- `src/main.c` — `Boot_MainOnce`（开备份域 → SelectPath → 分支）
+- `include/boot.h` / `src/boot.c` — 相位机 + Install + SelectPath + `LOAD_A`
+- `tests/test_boot_select.c` — Slice 7 主机 E2
+- `include/app_ota.h` / `src/app_ota.c` — Slice 8 App↔Boot 契约（无 Modbus）
+- `tests/test_app_ota.c` / `scripts/check_app_ota_no_modbus.py` — Slice 8 主机 E2 + 无 Modbus 证明
+- `include/factory_pack.h` / `src/factory_pack.c` / `tools/factory_pack_main.c` — Slice 9 出厂包
+- `tests/test_factory_pack.c` / `scripts/check_factory_no_ymodem.py` — Slice 9 主机 E2 + 禁 YMODEM
 - 既有：`ota_*` / `gt32_*` / `fmc` / `test_ota_*` / `test_boot_ota` / `test_ota_install`
