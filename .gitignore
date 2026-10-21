@@ -7,3 +7,17 @@ build/
 *.map
 .DS_Store
 *.swp
+
+# secrets / env / caches
+.env
+.env.*
+*.pem
+*.key
+*token*
+*cookie*
+*credential*
+.venv/
+venv/
+__pycache__/
+*.zip
+*.tar.gz
